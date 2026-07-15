@@ -78,8 +78,15 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "default": "s3://ngi-igenomes/igenomes/"
+                },
+                "index": {
+                    "type": "string"
+                },
+                "adapter_fasta": {
+                    "type": "string"
                 }
-            }
+            },
+            "required": ["index"]
         },
         "institutional_config_options": {
             "title": "Institutional config options",
