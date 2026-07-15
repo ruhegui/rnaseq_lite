@@ -3,8 +3,11 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { CAT                    } from '../modules/local/cat/main'
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+include { FASTP                  } from '../modules/nf-core/fastp/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { SALMON_QUANT           } from '../modules/nf-core/salmon/quant/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -30,9 +33,51 @@ workflow RNASEQ_LITE {
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
     //
+    // MODULE: Run CAT
+    //
+    ch_samplesheet
+    .map { meta, reads ->
+        def pairs = reads.collate(2)
+        [
+            meta,
+            pairs.collect { it[0] },
+            pairs.collect { it[1] }
+        ]
+    }
+    | CAT
+   concat_files = CAT.out.files.map { meta, read1, read2 ->
+    [meta, [read1, read2]]
+}
+    //
+    // MODULE: Run FASTP
+    //
+    concat_files
+    .map { meta, reads ->
+        [meta, reads, params.adapter_fasta ? [file(params.adapter_fasta)] : []]
+    }
+    .set { ch_fastp }
+    FASTP(
+    ch_fastp,
+    false,
+    false,
+    false
+    )
+    //
+    // MODULE: Run Salmon
+    //
+    ch_salmon_index = Channel.value(file(params.index))
+    SALMON_QUANT(
+        FASTP.out.reads,
+        ch_salmon_index,
+        [],
+        [],
+        false,
+        "A"
+    )
+    //
     // MODULE: Run FastQC
     //
-    FASTQC(ch_samplesheet)
+    FASTQC(FASTP.out.reads)
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.map{ _meta, file -> file })
 
     //
