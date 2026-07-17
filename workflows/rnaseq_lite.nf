@@ -35,19 +35,15 @@ workflow RNASEQ_LITE {
     //
     // MODULE: Run CAT
     //
-    ch_samplesheet
-    .map { meta, reads ->
-        def pairs = reads.collate(2)
-        [
-            meta,
-            pairs.collect { it[0] },
-            pairs.collect { it[1] }
-        ]
+   def ch_cat = ch_samplesheet.branch { meta, reads ->
+    passthrough:
+        (meta.single_end && reads.size() == 1) ||
+        (!meta.single_end && reads.size() == 2)
+
+    concatenate: true
     }
-    | CAT
-   concat_files = CAT.out.files.map { meta, read1, read2 ->
-    [meta, [read1, read2]]
-}
+    CAT(ch_cat.concatenate)
+    def concat_files = ch_cat.passthrough.mix(CAT.out.files)
     //
     // MODULE: Run FASTP
     //
