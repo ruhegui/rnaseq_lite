@@ -79,9 +79,14 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Adapter fasta file for fastp",
                     "hidden": true
+                },
+                "gtf": {
+                    "type": "string",
+                    "description": "gtf file for salmon",
+                    "fa_icon": "fas fa-dna"
                 }
             },
-            "required": ["index"]
+            "required": ["index", "gtf"]
         },
         "institutional_config_options": {
             "title": "Institutional config options",

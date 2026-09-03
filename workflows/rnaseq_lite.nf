@@ -62,11 +62,12 @@ workflow RNASEQ_LITE {
     // MODULE: Run Salmon
     //
     ch_salmon_index = Channel.value(file(params.index))
+    ch_gtf = Channel.value(file(params.gtf))
     SALMON_QUANT(
         FASTP.out.reads,
         ch_salmon_index,
-        [],
-        [],
+        ch_gtf,
+        null,
         false,
         "A"
     )
