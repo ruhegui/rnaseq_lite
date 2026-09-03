@@ -67,7 +67,7 @@ workflow RNASEQ_LITE {
         FASTP.out.reads,
         ch_salmon_index,
         ch_gtf,
-        null,
+        "",
         false,
         "A"
     )
